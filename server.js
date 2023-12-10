@@ -74,6 +74,22 @@ app.post("/signin", (req, res) => {
     });
 });
 
+app.get("/profile/:id", (req, res) => {
+    const { id } = req.params;
+    db.select("*")
+      .from("users")
+      .where({ id })
+      .then((user) => {
+        if (user.length) {
+          res.json(user[0]);
+        } else {
+          res.status(404).json("No user found");
+        }
+      })
+      .catch((err) => res.json("error getting user"));
+  });
+  
+
 app.listen(3000, () => {
   console.log("listening on port 3000");
 });
