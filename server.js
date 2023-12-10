@@ -13,3 +13,67 @@ const db = knex({
     database: "smart-brain",
   },
 });
+
+const app = express();
+
+app.use(express.urlencoded({ extended: false }));
+app.use(express.json());
+app.use(cors());
+
+app.post("/register", (req, res) => {
+  const { name, email, password } = req.body;
+  const hash = bcrypt.hashSync(password);
+  db.transaction((trx) => {
+    trx
+      .insert({
+        hash,
+        email,
+      })
+      .into("login")
+      .returning("email")
+      .then((loginEmail) => {
+        return trx("users")
+          .returning("*")
+          .insert({
+            name,
+            email: loginEmail[0].email,
+            joined: new Date(),
+          })
+          .then((user) => {
+            res.json(user[0]);
+          });
+      })
+      .then(trx.commit)
+      .catch(trx.rollback);
+  }).catch((err) => res.status(400).json("Unable to register"));
+});
+
+app.post("/signin", (req, res) => {
+  db.select("email", "hash")
+    .from("login")
+    .where("email", "=", req.body.email)
+    .then((data) => {
+      const isValid = bcrypt.compareSync(req.body.password, data[0].hash);
+      if (isValid) {
+        return db
+          .select("*")
+          .from("users")
+          .where("email", "=", req.body.email)
+          .then((user) => {
+            res.json(user[0]);
+          })
+          .catch((err) => {
+            res.json("Unable to signin");
+          });
+      } else {
+        res.status(404).json("user not found");
+      }
+    })
+    .catch((err) => {
+      res.json("user not found");
+    });
+});
+
+app.listen(3000, () => {
+  console.log("listening on port 3000");
+});
