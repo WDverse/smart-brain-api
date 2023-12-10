@@ -3,6 +3,7 @@ import cors from "cors";
 import knex from "knex";
 import bcrypt from "bcrypt-nodejs";
 import register from "./controllers/register.js";
+import signIn from "./controllers/signIn.js";
 
 const db = knex({
   client: "pg",
@@ -22,49 +23,14 @@ app.use(express.json());
 app.use(cors());
 
 app.post("/register", (req, res) => {
-  register (req, res, db, bcrypt);
+  register(req, res, db, bcrypt);
 });
 
 app.post("/signin", (req, res) => {
-  db.select("email", "hash")
-    .from("login")
-    .where("email", "=", req.body.email)
-    .then((data) => {
-      const isValid = bcrypt.compareSync(req.body.password, data[0].hash);
-      if (isValid) {
-        return db
-          .select("*")
-          .from("users")
-          .where("email", "=", req.body.email)
-          .then((user) => {
-            res.json(user[0]);
-          })
-          .catch((err) => {
-            res.json("Unable to signin");
-          });
-      } else {
-        res.status(404).json("user not found");
-      }
-    })
-    .catch((err) => {
-      res.json("user not found");
-    });
+  signIn(req, res, db, bcrypt);
 });
 
-app.get("/profile/:id", (req, res) => {
-  const { id } = req.params;
-  db.select("*")
-    .from("users")
-    .where({ id })
-    .then((user) => {
-      if (user.length) {
-        res.json(user[0]);
-      } else {
-        res.status(404).json("No user found");
-      }
-    })
-    .catch((err) => res.json("error getting user"));
-});
+app.get("/profile/:id", );
 
 app.put("/image", (req, res) => {
   const { id } = req.body;
