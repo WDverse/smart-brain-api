@@ -4,6 +4,8 @@ import knex from "knex";
 import bcrypt from "bcrypt-nodejs";
 import register from "./controllers/register.js";
 import signIn from "./controllers/signIn.js";
+import profile from './controllers/profile.js';
+import userEntries from './controllers/userEntries.js';
 
 const db = knex({
   client: "pg",
@@ -30,18 +32,12 @@ app.post("/signin", (req, res) => {
   signIn(req, res, db, bcrypt);
 });
 
-app.get("/profile/:id", );
+app.get("/profile/:id", (req, res) => {
+  profile (req, res);
+});
 
 app.put("/image", (req, res) => {
-  const { id } = req.body;
-  db("users")
-    .where("id", "=", id)
-    .increment("entries", 1)
-    .returning("entries")
-    .then((entries) => {
-      res.json(entries[0].entries);
-    })
-    .catch((err) => res.json("unable to get entries"));
+  userEntries(req, res, db)
 });
 
 app.listen(3000, () => {
